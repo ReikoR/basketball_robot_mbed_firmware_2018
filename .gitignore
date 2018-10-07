@@ -1,0 +1,4 @@
+.idea/
+BUILD/
+cmake-build-debug/
+node_modules/
