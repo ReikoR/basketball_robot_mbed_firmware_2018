@@ -32,9 +32,9 @@ function copyBin(callback) {
         if (drives.length > 0 && drives[0].mountpoints.length > 0) {
             console.log(drives[0].mountpoints);
 
-            const targetPath = drives[0].mountpoints[0].path + '//mbed_firmware.bin';
+            const targetPath = drives[0].mountpoints[0].path + '//mbed_firmware_2018.bin';
 
-            let direcory = 'BUILD/LPC1768/GCC_ARM/';
+            let direcory = 'BUILD/LPC1768/GCC_ARM-DEBUG/';
 
             let fileNames = fs.readdirSync(direcory);
 
