@@ -34,6 +34,7 @@ DigitalIn ball2(P0_30);
 
 Ticker heartbeatTicker;
 
+PwmOut servo(P2_5);
 
 char recvBuffer[64];
 char ethSendBuffer[64];
@@ -95,6 +96,8 @@ void onUDPSocketData(void* buffer, int size) {
 
         SpeedCommand *command = static_cast<SpeedCommand *>(buffer);
 
+        servo.pulsewidth_us(command->servo);
+
         motors.setSpeeds(command->speed1, command->speed2, command->speed3, command->speed4, command->speed5);
     }
 }
@@ -109,6 +112,9 @@ void handleSpeedsSent() {
 int main() {
     motors.baud(150000);
     motors.attach(&handleSpeedsSent);
+
+    servo.period_us(4000);
+    servo.pulsewidth_us(1500);
 
     leds.setLedColor(0, LedManager::YELLOW);
     leds.update();

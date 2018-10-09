@@ -7,6 +7,7 @@ struct SpeedCommand {
     int16_t speed3;
     int16_t speed4;
     int16_t speed5;
+    uint16_t servo;
 };
 
 struct __attribute__((packed)) Feedback {

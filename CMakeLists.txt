@@ -135,5 +135,6 @@ include_directories(
 )
 
 add_definitions(-DDEVICE_SERIAL)
+add_definitions(-DDEVICE_PWMOUT)
 
 add_executable(${MAIN_TARGET} ${SRCS})
