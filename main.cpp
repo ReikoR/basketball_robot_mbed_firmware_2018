@@ -4,6 +4,7 @@
 #include "MotorDriverManagerRS485.h"
 #include "neopixel.h"
 #include "LedManager.h"
+#include "motor.h"
 
 #define PORT 8042
 #define MBED_IP_ADDRESS "192.168.4.1"
@@ -27,12 +28,14 @@ extern "C" void mbed_mac_address(char *s) {
 
 
 MotorDriverManagerRS485 motors(P2_0, P2_1);
+Motor feeder(P2_4, P3_25, P3_26, P0_28, P0_27);
 LedManager leds(P0_9);
 
 DigitalIn ball1(P1_29);
 DigitalIn ball2(P0_30);
 
 Ticker heartbeatTicker;
+Ticker pidTicker;
 
 PwmOut servo(P2_5);
 
@@ -70,6 +73,10 @@ void heartbeatTick() {
     isHeartbeatUpdate = true;
 }
 
+void pidTick() {
+    feeder.pid();
+}
+
 void sendFeedback() {
     int* speeds = motors.getSpeeds();
 
@@ -79,6 +86,7 @@ void sendFeedback() {
     feedback.speed3 = static_cast<int16_t>(speeds[2]);
     feedback.speed4 = static_cast<int16_t>(speeds[3]);
     feedback.speed5 = static_cast<int16_t>(speeds[4]);
+    feedback.speed6 = static_cast<int16_t>(feeder.getSpeed());
     feedback.ball1 = static_cast<uint8_t>(ball1);
     feedback.ball2 = static_cast<uint8_t>(ball2);
     feedback.isSpeedChanged = isSpeedChanged;
@@ -96,6 +104,7 @@ void onUDPSocketData(void* buffer, int size) {
 
         SpeedCommand *command = static_cast<SpeedCommand *>(buffer);
 
+        feeder.setSpeed(command->speed6);
         servo.pulsewidth_us(command->servo);
 
         motors.setSpeeds(command->speed1, command->speed2, command->speed3, command->speed4, command->speed5);
@@ -130,6 +139,8 @@ int main() {
 
     heartbeatTicker.attach_us(&heartbeatTick, heartBeatPeriod_us);
 
+    pidTicker.attach(pidTick, 1.0 / 60.0);
+
     bool blinkState = false;
 
     leds.setLedColor(0, LedManager::MAGENTA);
@@ -149,6 +160,7 @@ int main() {
 
                 if (failSafeEnabled) {
                     returnSpeeds = false;
+                    feeder.setSpeed(0);
                     motors.setSpeeds(0, 0, 0, 0, 0);
                 }
             }
