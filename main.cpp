@@ -2,6 +2,8 @@
 #include "EthernetInterface.h"
 #include "commands.h"
 #include "MotorDriverManagerRS485.h"
+#include "neopixel.h"
+#include "LedManager.h"
 
 #define PORT 8042
 #define MBED_IP_ADDRESS "192.168.4.1"
@@ -25,15 +27,13 @@ extern "C" void mbed_mac_address(char *s) {
 
 
 MotorDriverManagerRS485 motors(P2_0, P2_1);
+LedManager leds(P0_9);
 
 DigitalIn ball1(P2_12);
 DigitalIn ball2(P2_13);
 
 Ticker heartbeatTicker;
 
-DigitalOut led1(P0_18);
-DigitalOut led2(P0_19);
-DigitalOut led3(P0_20);
 
 char recvBuffer[64];
 char ethSendBuffer[64];
@@ -110,9 +110,8 @@ int main() {
     motors.baud(150000);
     motors.attach(&handleSpeedsSent);
 
-    led1 = 0;
-    led2 = 0;
-    led3 = 1;
+    leds.setLedColor(0, LedManager::YELLOW);
+    leds.update();
 
     eth.set_network(MBED_IP_ADDRESS, "255.255.255.0", PC_IP_ADDRESS);
     eth.connect();
@@ -127,15 +126,13 @@ int main() {
 
     bool blinkState = false;
 
-    led2 = 1;
-    led3 = 0;
+    leds.setLedColor(0, LedManager::MAGENTA);
+    leds.update();
 
     runningTime.start();
 
     while (true) {
-        led2 = 1;
         motors.update();
-        led2 = 0;
 
         if (isHeartbeatUpdate) {
             failSafeCountMotors++;
@@ -154,15 +151,16 @@ int main() {
                 updateLeds = false;
 
                 if (blinkState) {
-                    led1 = 1;
+                    leds.setLedColor(0, LedManager::BLUE);
                     sendFeedback();
                 } else {
-                    led1 = 0;
+                    leds.setLedColor(0, LedManager::MAGENTA);
                 }
 
                 blinkState = !blinkState;
             }
 
+            leds.update();
         }
 
         nsapi_size_or_error_t size = socket.recvfrom(&address, recvBuffer, sizeof recvBuffer);
