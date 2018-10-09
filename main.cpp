@@ -29,8 +29,8 @@ extern "C" void mbed_mac_address(char *s) {
 MotorDriverManagerRS485 motors(P2_0, P2_1);
 LedManager leds(P0_9);
 
-DigitalIn ball1(P2_12);
-DigitalIn ball2(P2_13);
+DigitalIn ball1(P1_29);
+DigitalIn ball2(P0_30);
 
 Ticker heartbeatTicker;
 
