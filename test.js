@@ -7,11 +7,11 @@ const mbedAddress = '192.168.4.1';
 var currentTime = Date.now();
 var prevTime = currentTime;
 
-var speeds = [0, 0, 0, 0, 0];
-var maxSpeeds = [100, 100, 100, 100, 1000];
-var minSpeeds = [-100, -100, -100, -100, -1000];
-var speedsSteps = [1, 2, 3, 4, 5];
-var speedDirectionsUp = [true, true, true, true, true];
+var speeds = [0, 0, 0, 0, 0, 20, 1500];
+var maxSpeeds = [100, 100, 100, 100, 15000, 20, 1600];
+var minSpeeds = [-100, -100, -100, -100, 500, 0, 1050];
+var speedsSteps = [0, 0, 0, 0, 10, 0, 10];
+var speedDirectionsUp = [true, true, true, true, true, true];
 
 function clone(obj) {
     var cloned = {};
@@ -38,9 +38,9 @@ socket.on('message', (msg, rinfo) => {
         msg.readInt16LE(4),
         msg.readInt16LE(6),
         msg.readInt16LE(8),
-        msg.readUInt8(10),
-        msg.readUInt8(11),
-        msg.readUInt16LE(12),
+        msg.readInt16LE(10),
+        msg.readUInt8(12),
+        msg.readUInt8(13),
         msg.readUInt8(14),
         msg.readInt32LE(15)
     );
@@ -55,7 +55,7 @@ socket.on('listening', () => {
     var value = 0;
 
     setInterval(function () {
-        const command = new Int16Array(5);
+        const command = new Int16Array(7);
 
         for (let i = 0; i < speeds.length; i++) {
             let newSpeed = speeds[i] + (speedDirectionsUp[i] ? speedsSteps[i] : - speedsSteps[i])
@@ -63,7 +63,7 @@ socket.on('listening', () => {
             if (speedDirectionsUp[i] && newSpeed > maxSpeeds[i]) {
                 newSpeed = maxSpeeds[i];
                 speedDirectionsUp[i] = false;
-            } else if (!speedDirectionsUp[i] && newSpeed < maxSpeeds[i]) {
+            } else if (!speedDirectionsUp[i] && newSpeed < minSpeeds[i]) {
                 newSpeed = minSpeeds[i];
                 speedDirectionsUp[i] = true;
             }
@@ -84,7 +84,7 @@ socket.on('listening', () => {
 
         //pipeMotorSpeed = Math.sin(value) * 1000;
         //value += 0.005;
-    }, 100);
+    }, 50);
 });
 
 socket.bind(8042);
