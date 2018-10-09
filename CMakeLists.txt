@@ -46,7 +46,6 @@ enable_language(ASM)
 
 add_sources(main.cpp)
 add_sources(CisecoManager/CisecoManager.cpp)
-add_sources(TFMini/TFMini.cpp)
 add_sources(MotorDriverManagerRS485/MotorDriverManagerRS485.cpp)
 
 include_directories(

@@ -17,7 +17,6 @@ struct __attribute__((packed)) Feedback {
     int16_t speed5;
     uint8_t ball1;
     uint8_t ball2;
-    uint16_t distance;
     uint8_t isSpeedChanged;
     int time;
 };
