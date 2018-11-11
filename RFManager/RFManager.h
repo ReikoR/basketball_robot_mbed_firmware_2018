@@ -1,15 +1,15 @@
-#ifndef CISECOMANAGER_H
-#define CISECOMANAGER_H
+#ifndef RFMANAGER_H
+#define RFMANAGER_H
 
 #include "mbed.h"
 #include "CircBuffer.h"
 
-class CisecoManager {
+class RFManager {
 protected:
     FunctionPointer _callback;
 
 public:
-    CisecoManager(PinName txPinName, PinName rxPinName);
+    RFManager(PinName txPinName, PinName rxPinName);
 
     void baud(int baudrate);
 
@@ -21,7 +21,7 @@ public:
 
     void update();
 
-    void handleMessage();
+    void handleMessage(unsigned int length);
 
     void setShortCommandMode(bool isEnabled);
 
@@ -47,6 +47,7 @@ private:
 
     void serialWrite(char *sendData, int length);
     char serialReadChar();
+    bool isSerialReadable();
 
     CircBuffer<char> buf;
 
@@ -62,4 +63,4 @@ private:
 };
 
 
-#endif //CISECOMANAGER_H
+#endif //RFManager_H

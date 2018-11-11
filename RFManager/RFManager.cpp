@@ -1,7 +1,7 @@
 #include <mbed-os/targets/TARGET_NXP/TARGET_LPC176X/device/cmsis.h>
-#include "CisecoManager.h"
+#include "RFManager.h"
 
-CisecoManager::CisecoManager(PinName txPinName, PinName rxPinName):
+RFManager::RFManager(PinName txPinName, PinName rxPinName):
         serial(txPinName, rxPinName), buf(64) {
 
     messageAvailable = false;
@@ -15,22 +15,25 @@ CisecoManager::CisecoManager(PinName txPinName, PinName rxPinName):
         serialId = 1;
     } else if (rxPinName == P0_11) {
         serialId = 2;
+    } else if (rxPinName == P0_1) {
+        serialId = 3;
     } else {
         serialId = 0;
     }
 
-    serial.attach(this, &CisecoManager::rxHandler);
+    serial.attach(this, &RFManager::rxHandler);
 }
 
-void CisecoManager::baud(int baudrate) {
+void RFManager::baud(int baudrate) {
     serial.baud(baudrate);
 }
 
-void CisecoManager::rxHandler(void) {
+void RFManager::rxHandler(void) {
     // Interrupt does not work with RTOS when using standard functions (getc, putc)
     // https://developer.mbed.org/forum/bugs-suggestions/topic/4217/
 
-    while (serial.readable()) {
+    //while (serial.readable()) {
+    while (isSerialReadable()) {
         char c = serialReadChar();
 
         if (receiveCounter < commandLength) {
@@ -41,8 +44,8 @@ void CisecoManager::rxHandler(void) {
                     receiveCounter++;
                 }
             } else if (c == 'a' && !shortCommandsEnabled
-                || c == 'a' && shortCommandsEnabled && (receiveCounter < commandLength - 1)
-            ) {
+                       || c == 'a' && shortCommandsEnabled && (receiveCounter < commandLength - 1)
+                    ) {
                 // If a is received in the middle, assume some bytes got lost before and start from beginning
                 receiveCounter = 0;
 
@@ -53,80 +56,92 @@ void CisecoManager::rxHandler(void) {
                 receiveCounter++;
             }
 
-            if (receiveCounter == commandLength) {
-                receiveCounter = 0;
-
-                for (unsigned int i = 0; i < commandLength; i++) {
+            if (receiveCounter == commandLength || c == '-') {
+                for (unsigned int i = 0; i < receiveCounter; i++) {
                     buf.queue(receiveBuffer[i]);
                 }
 
                 if (!messageAvailable) {
-                    handleMessage();
+                    handleMessage(receiveCounter);
                     //break;
                 }
+
+                receiveCounter = 0;
             }
         }
     }
 }
 
-bool CisecoManager::readable() {
+bool RFManager::readable() {
     return messageAvailable;
 }
 
-char *CisecoManager::read() {
+char* RFManager::read() {
     messageAvailable = false;
     return receivedMessage;
 }
 
-void CisecoManager::send(char *sendData) {
+void RFManager::send(char *sendData) {
     serialWrite(sendData, commandLength);
 }
 
-void CisecoManager::send(char *sendData, int length) {
+void RFManager::send(char *sendData, int length) {
     serialWrite(sendData, length);
 }
 
-void CisecoManager::update() {
+void RFManager::update() {
     /*if (receiveCounter == commandLength) {
         handleMessage();
         _callback.call();
     }*/
 
     if (buf.available() >= commandLength) {
-        handleMessage();
+        handleMessage(commandLength);
     }
 }
 
-void CisecoManager::handleMessage() {
+void RFManager::handleMessage(unsigned int length) {
     if (messageAvailable) {
         return;
     }
 
-    for (unsigned int i = 0; i < commandLength; i++) {
+    for (unsigned int i = 0; i < length; i++) {
         buf.dequeue(receivedMessage + i);
     }
 
-    receivedMessage[commandLength] = '\0';
-
-    /*receiveCounter = 0;
-
-    memcpy(receivedMessage, receiveBuffer, sizeof(receiveBuffer));*/
+    receivedMessage[length] = '\0';
 
     messageAvailable = true;
 }
 
-void CisecoManager::serialWrite(char *sendData, int length) {
+void RFManager::serialWrite(char *sendData, int length) {
     int i = 0;
 
     while (i < length) {
         if (serial.writeable()) {
             serial.putc(sendData[i]);
+            i++;
         }
-        i++;
     }
 }
 
-char CisecoManager::serialReadChar() {
+bool RFManager::isSerialReadable() {
+    if (serialId == 1) {
+        return LPC_UART1->LSR & (uint8_t)0x01;
+    }
+
+    if (serialId == 2) {
+        return LPC_UART2->LSR & (uint8_t)0x01;
+    }
+
+    if (serialId == 3) {
+        return LPC_UART3->LSR & (uint8_t)0x01;
+    }
+
+    return LPC_UART0->LSR & (uint8_t)0x01;
+}
+
+char RFManager::serialReadChar() {
     if (serialId == 1) {
         return LPC_UART1->RBR;
     }
@@ -135,10 +150,14 @@ char CisecoManager::serialReadChar() {
         return LPC_UART2->RBR;
     }
 
+    if (serialId == 3) {
+        return LPC_UART3->RBR;
+    }
+
     return LPC_UART0->RBR;
 }
 
-void CisecoManager::setShortCommandMode(bool isEnabled) {
+void RFManager::setShortCommandMode(bool isEnabled) {
     shortCommandsEnabled = isEnabled;
     receiveCounter = 0;
 

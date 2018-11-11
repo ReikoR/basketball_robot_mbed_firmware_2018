@@ -45,7 +45,7 @@ set(MAIN_TARGET ${PROJECT_NAME}.elf)
 enable_language(ASM)
 
 add_sources(main.cpp)
-add_sources(CisecoManager/CisecoManager.cpp)
+add_sources(RFManager/RFManager.cpp)
 add_sources(PixelArray/neopixel.cpp)
 add_sources(MotorDriverManagerRS485/MotorDriverManagerRS485.cpp)
 add_sources(LedManager/LedManager.cpp)
@@ -53,7 +53,7 @@ add_sources(QED/qed.cpp)
 add_sources(Motor/motor.cpp)
 
 include_directories(
-        CisecoManager
+        RFManager
         TFMini
         LedManager
         MotorDriverManagerRS485
