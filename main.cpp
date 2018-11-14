@@ -121,7 +121,7 @@ void handleRefereeCommand(char* refereeCommand) {
     char* stop = const_cast<char *>("STOP");
     char* ping = const_cast<char *>("PING");
 
-    if (refereeCommand[1] == fieldID && refereeCommand[2] == robotID) {
+    if (refereeCommand[1] == fieldID && (refereeCommand[2] == 'X' || refereeCommand[2] == robotID)) {
         lastParsedRefereeCommand[0] = refereeCommand[1]; // Robot ID
         lastParsedRefereeCommand[1] = refereeCommand[2]; // Field ID
 
@@ -131,8 +131,9 @@ void handleRefereeCommand(char* refereeCommand) {
             lastParsedRefereeCommand[2] = 'S';
         } else if (areCharsEqual(refereeCommand + 3, stop, 4)) {
             lastParsedRefereeCommand[2] = 'T';
+            
         } else if (areCharsEqual(refereeCommand + 3, ping, 4)) {
-            lastParsedRefereeCommand[2] = 'P';
+            lastParsedRefereeCommand[2] = refereeCommand[2] == robotID ? 'P' : 'p';
         }
 
         if (prevRefereeCommand != lastParsedRefereeCommand[2]) {
